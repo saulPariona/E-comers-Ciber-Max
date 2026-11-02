@@ -1,0 +1,45 @@
+# docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+services:
+  app:
+    build:
+      target: prod
+    image: cibermax-app:latest
+    env_file: .env
+
+  queue:
+    build:
+      target: prod
+    image: cibermax-app:latest
+    env_file: .env
+
+  scheduler:
+    build:
+      target: prod
+    image: cibermax-app:latest
+    env_file: .env
+
+  web:
+    image: cibermax-web:latest
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: web-prod
+
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
