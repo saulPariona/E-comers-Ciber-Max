@@ -25,11 +25,6 @@
             @endforeach
         </div>
 
-        <button type="button" data-carousel-toggle aria-pressed="false" aria-label="Pausar carrusel"
-                class="absolute right-4 bottom-3 hidden size-8 place-items-center rounded-full bg-white/15 transition-colors hover:bg-white/25 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none sm:grid">
-            <x-icon name="pause" variant="solid" class="size-4" data-icon-pause />
-            <x-icon name="play" variant="solid" class="hidden size-4" data-icon-play />
-        </button>
     </section>
 
     {{-- Franja de beneficios --}}
