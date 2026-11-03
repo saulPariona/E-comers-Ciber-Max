@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable([
@@ -54,6 +56,52 @@ class Usuario extends Authenticatable
     public function routeNotificationForMail(): ?string
     {
         return $this->Email;
+    }
+
+    /**
+     * Crea un usuario con rol Cliente y su fila en `clientes`, con código CLI-000123.
+     *
+     * @param  array<string, mixed>  $datos
+     */
+    public static function crearCliente(array $datos): self
+    {
+        return DB::transaction(function () use ($datos) {
+            $usuario = self::create([
+                ...$datos,
+                'IdRol' => Rol::CLIENTE,
+                'CodigoUsuario' => 'TMP-'.Str::random(20),
+                'Estado' => true,
+            ]);
+
+            $usuario->update(['CodigoUsuario' => 'CLI-'.str_pad((string) $usuario->IdUsuario, 6, '0', STR_PAD_LEFT)]);
+            Cliente::create(['IdUsuario' => $usuario->IdUsuario]);
+
+            return $usuario;
+        });
+    }
+
+    public function esEmpleado(): bool
+    {
+        return in_array($this->IdRol, [
+            Rol::ADMINISTRADOR,
+            Rol::SUPERVISOR_VENTAS,
+            Rol::VENDEDOR,
+            Rol::SUPERVISOR_ALMACEN,
+            Rol::ALMACENERO,
+        ], true);
+    }
+
+    /**
+     * URL del área a la que pertenece el usuario tras iniciar sesión.
+     */
+    public function rutaInicio(): string
+    {
+        return match ($this->IdRol) {
+            Rol::ADMINISTRADOR => route('admin.dashboard', absolute: false),
+            Rol::SUPERVISOR_VENTAS, Rol::VENDEDOR => route('ventas.dashboard', absolute: false),
+            Rol::SUPERVISOR_ALMACEN, Rol::ALMACENERO => route('almacen.dashboard', absolute: false),
+            default => route('home', absolute: false),
+        };
     }
 
     public function rol(): BelongsTo
